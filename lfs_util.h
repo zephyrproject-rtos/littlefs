@@ -32,6 +32,17 @@
 #include <assert.h>
 #endif
 #if !defined(LFS_NO_DEBUG) || !defined(LFS_NO_WARN) || !defined(LFS_NO_ERROR)
+#ifdef __ZEPHYR__
+#include <logging/log.h>
+
+#ifdef LFS_LOG_REGISTER
+LOG_MODULE_REGISTER(littlefs, CONFIG_FS_LOG_LEVEL);
+#else
+LOG_MODULE_DECLARE(littlefs);
+#endif
+
+#endif  /* __ZEPHYR__ */
+
 #include <stdio.h>
 #endif
 
@@ -47,29 +58,45 @@ extern "C"
 
 // Logging functions
 #ifndef LFS_NO_DEBUG
+#ifdef __ZEPHYR__
+#define LFS_DEBUG(fmt, ...) LOG_DBG(fmt, __VA_ARGS__)
+#else /* __ZEPHYR__ */
 #define LFS_DEBUG(fmt, ...) \
     printf("lfs debug:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_DEBUG(fmt, ...)
 #endif
 
 #ifndef LFS_NO_WARN
+#ifdef __ZEPHYR__
+#define LFS_WARN(fmt, ...) LOG_WRN(fmt, __VA_ARGS__)
+#else /* __ZEPHYR__ */
 #define LFS_WARN(fmt, ...) \
     printf("lfs warn:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_WARN(fmt, ...)
 #endif
 
 #ifndef LFS_NO_ERROR
+#ifdef __ZEPHYR__
+#define LFS_ERROR(fmt, ...) LOG_ERR(fmt, __VA_ARGS__)
+#else /* __ZEPHYR__ */
 #define LFS_ERROR(fmt, ...) \
     printf("lfs error:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_ERROR(fmt, ...)
 #endif
 
 // Runtime assertions
 #ifndef LFS_NO_ASSERT
+#ifdef __ZEPHYR__
+#define LFS_ASSERT(test) __ASSERT_NO_MSG(test)
+#else /* __ZEPHYR__ */
 #define LFS_ASSERT(test) assert(test)
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_ASSERT(test)
 #endif
