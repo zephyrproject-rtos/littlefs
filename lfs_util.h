@@ -31,7 +31,12 @@
 #ifndef LFS_NO_ASSERT
 #include <assert.h>
 #endif
-#if !defined(LFS_NO_DEBUG) || !defined(LFS_NO_WARN) || !defined(LFS_NO_ERROR)
+
+#if !defined(LFS_NO_DEBUG) || \
+        !defined(LFS_NO_WARN) || \
+        !defined(LFS_NO_ERROR) || \
+        defined(LFS_YES_TRACE)
+
 #ifdef __ZEPHYR__
 #include <logging/log.h>
 
@@ -57,12 +62,23 @@ extern "C"
 // code footprint
 
 // Logging functions
+#ifdef LFS_YES_TRACE
+#ifdef __ZEPHYR__
+#define LFS_DEBUG(fmt, ...) LOG_DBG("trace:%d: " fmt, __LINE__, __VA_ARGS__)
+#else /* __ZEPHYR__ */
+#define LFS_TRACE(fmt, ...) \
+    printf("lfs_trace:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+#endif /* __ZEPHYR__ */
+#else
+#define LFS_TRACE(fmt, ...)
+#endif
+
 #ifndef LFS_NO_DEBUG
 #ifdef __ZEPHYR__
 #define LFS_DEBUG(fmt, ...) LOG_DBG(fmt, __VA_ARGS__)
 #else /* __ZEPHYR__ */
 #define LFS_DEBUG(fmt, ...) \
-    printf("lfs debug:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+    printf("lfs_debug:%d: " fmt "\n", __LINE__, __VA_ARGS__)
 #endif /* __ZEPHYR__ */
 #else
 #define LFS_DEBUG(fmt, ...)
@@ -73,7 +89,7 @@ extern "C"
 #define LFS_WARN(fmt, ...) LOG_WRN(fmt, __VA_ARGS__)
 #else /* __ZEPHYR__ */
 #define LFS_WARN(fmt, ...) \
-    printf("lfs warn:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+    printf("lfs_warn:%d: " fmt "\n", __LINE__, __VA_ARGS__)
 #endif /* __ZEPHYR__ */
 #else
 #define LFS_WARN(fmt, ...)
@@ -84,7 +100,7 @@ extern "C"
 #define LFS_ERROR(fmt, ...) LOG_ERR(fmt, __VA_ARGS__)
 #else /* __ZEPHYR__ */
 #define LFS_ERROR(fmt, ...) \
-    printf("lfs error:%d: " fmt "\n", __LINE__, __VA_ARGS__)
+    printf("lfs_error:%d: " fmt "\n", __LINE__, __VA_ARGS__)
 #endif /* __ZEPHYR__ */
 #else
 #define LFS_ERROR(fmt, ...)
