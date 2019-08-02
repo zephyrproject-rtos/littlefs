@@ -64,7 +64,7 @@ extern "C"
 // Logging functions
 #ifdef LFS_YES_TRACE
 #ifdef __ZEPHYR__
-#define LFS_DEBUG(fmt, ...) LOG_DBG("trace:%d: " fmt, __LINE__, __VA_ARGS__)
+#define LFS_TRACE(fmt, ...) LOG_DBG("trace:%d: " fmt, __LINE__, __VA_ARGS__)
 #else /* __ZEPHYR__ */
 #define LFS_TRACE(fmt, ...) \
     printf("lfs_trace:%d: " fmt "\n", __LINE__, __VA_ARGS__)
