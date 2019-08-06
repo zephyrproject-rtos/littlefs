@@ -29,7 +29,11 @@
 #include <stdlib.h>
 #endif
 #ifndef LFS_NO_ASSERT
+#ifdef __ZEPHYR__
+#include <sys/__assert.h>
+#else  /* __ZEPHYR__ */
 #include <assert.h>
+#endif  /* __ZEPHYR__ */
 #endif
 
 #if !defined(LFS_NO_DEBUG) || \
