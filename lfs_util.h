@@ -66,6 +66,7 @@ extern "C"
 // code footprint
 
 // Logging functions
+#ifndef LFS_TRACE
 #ifdef LFS_YES_TRACE
 #ifdef __ZEPHYR__
 #define LFS_TRACE(fmt, ...) LOG_DBG("%s:%d:trace: " fmt, __FILE__, __LINE__, __VA_ARGS__)
@@ -77,7 +78,9 @@ extern "C"
 #else
 #define LFS_TRACE(...)
 #endif
+#endif
 
+#ifndef LFS_DEBUG
 #ifndef LFS_NO_DEBUG
 #ifdef __ZEPHYR__
 #define LFS_DEBUG(fmt, ...) LOG_DBG("%s:%d: " fmt, __FILE__, __LINE__, __VA_ARGS__)
@@ -89,7 +92,9 @@ extern "C"
 #else
 #define LFS_DEBUG(...)
 #endif
+#endif
 
+#ifndef LFS_WARN
 #ifndef LFS_NO_WARN
 #ifdef __ZEPHYR__
 #define LFS_WARN(fmt, ...) LOG_WRN("%s:%d: " fmt, __FILE__, __LINE__, __VA_ARGS__)
@@ -101,7 +106,9 @@ extern "C"
 #else
 #define LFS_WARN(...)
 #endif
+#endif
 
+#ifndef LFS_ERROR
 #ifndef LFS_NO_ERROR
 #ifdef __ZEPHYR__
 #define LFS_ERROR(fmt, ...) LOG_ERR("%s:%d: " fmt, __FILE__, __LINE__, __VA_ARGS__)
@@ -113,8 +120,10 @@ extern "C"
 #else
 #define LFS_ERROR(...)
 #endif
+#endif
 
 // Runtime assertions
+#ifndef LFS_ASSERT
 #ifndef LFS_NO_ASSERT
 #ifdef __ZEPHYR__
 #define LFS_ASSERT(test) __ASSERT_NO_MSG(test)
@@ -123,6 +132,7 @@ extern "C"
 #endif /* __ZEPHYR__ */
 #else
 #define LFS_ASSERT(test)
+#endif
 #endif
 
 
