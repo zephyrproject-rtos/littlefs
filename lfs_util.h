@@ -46,8 +46,6 @@
 
 #ifdef LFS_LOG_REGISTER
 LOG_MODULE_REGISTER(littlefs, CONFIG_FS_LOG_LEVEL);
-#else
-LOG_MODULE_DECLARE(littlefs, CONFIG_FS_LOG_LEVEL);
 #endif
 
 #endif  /* __ZEPHYR__ */
