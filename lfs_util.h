@@ -7,18 +7,22 @@
 #ifndef LFS_UTIL_H
 #define LFS_UTIL_H
 
+#include <sys/util_macro.h>
+
 // Users can override lfs_util.h with their own configuration by defining
 // LFS_CONFIG as a header file to include (-DLFS_CONFIG=lfs_config.h).
 //
 // If LFS_CONFIG is used, none of the default utils will be emitted and must be
 // provided by the config file. To start, I would suggest copying lfs_util.h
 // and modifying as needed.
-#ifdef LFS_CONFIG
-#define LFS_STRINGIZE(x) LFS_STRINGIZE2(x)
-#define LFS_STRINGIZE2(x) #x
-#include LFS_STRINGIZE(LFS_CONFIG)
-#else
 
+#if IS_ENABLED(CONFIG_LFS_READONLY)
+#define LFS_READONLY 1
+#endif
+
+#if IS_ENABLED(CONFIG_LFS_CFG)
+#include CONFIG_CUSTOM_LFS_CONFIG_FILE
+#else
 // System includes
 #include <stdint.h>
 #include <stdbool.h>

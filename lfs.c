@@ -2872,7 +2872,6 @@ static int lfs_file_rawsync(lfs_t *lfs, lfs_file_t *file) {
 
 static lfs_ssize_t lfs_file_rawread(lfs_t *lfs, lfs_file_t *file,
         void *buffer, lfs_size_t size) {
-    LFS_ASSERT((file->flags & LFS_O_RDONLY) == LFS_O_RDONLY);
 
     uint8_t *data = buffer;
     lfs_size_t nsize = size;
