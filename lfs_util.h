@@ -1,6 +1,7 @@
 /*
  * lfs utility functions
  *
+ * Copyright (c) 2022, The littlefs authors.
  * Copyright (c) 2017, Arm Limited. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -29,12 +30,27 @@
 #include <stdlib.h>
 #endif
 #ifndef LFS_NO_ASSERT
+#ifdef __ZEPHYR__
+#include <sys/__assert.h>
+#else  /* __ZEPHYR__ */
 #include <assert.h>
+#endif  /* __ZEPHYR__ */
 #endif
+
 #if !defined(LFS_NO_DEBUG) || \
         !defined(LFS_NO_WARN) || \
         !defined(LFS_NO_ERROR) || \
         defined(LFS_YES_TRACE)
+
+#ifdef __ZEPHYR__
+#include <logging/log.h>
+
+#ifdef LFS_LOG_REGISTER
+LOG_MODULE_REGISTER(littlefs, CONFIG_FS_LOG_LEVEL);
+#endif
+
+#endif  /* __ZEPHYR__ */
+
 #include <stdio.h>
 #endif
 
@@ -51,9 +67,13 @@ extern "C"
 // Logging functions
 #ifndef LFS_TRACE
 #ifdef LFS_YES_TRACE
+#ifdef __ZEPHYR__
+#define LFS_TRACE(fmt, ...) LOG_DBG("%s:%d:trace: " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#else /* __ZEPHYR__ */
 #define LFS_TRACE_(fmt, ...) \
     printf("%s:%d:trace: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_TRACE(...) LFS_TRACE_(__VA_ARGS__, "")
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_TRACE(...)
 #endif
@@ -61,9 +81,13 @@ extern "C"
 
 #ifndef LFS_DEBUG
 #ifndef LFS_NO_DEBUG
+#ifdef __ZEPHYR__
+#define LFS_DEBUG(fmt, ...) LOG_DBG("%s:%d: " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#else /* __ZEPHYR__ */
 #define LFS_DEBUG_(fmt, ...) \
     printf("%s:%d:debug: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_DEBUG(...) LFS_DEBUG_(__VA_ARGS__, "")
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_DEBUG(...)
 #endif
@@ -71,9 +95,13 @@ extern "C"
 
 #ifndef LFS_WARN
 #ifndef LFS_NO_WARN
+#ifdef __ZEPHYR__
+#define LFS_WARN(fmt, ...) LOG_WRN("%s:%d: " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#else /* __ZEPHYR__ */
 #define LFS_WARN_(fmt, ...) \
     printf("%s:%d:warn: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_WARN(...) LFS_WARN_(__VA_ARGS__, "")
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_WARN(...)
 #endif
@@ -81,9 +109,13 @@ extern "C"
 
 #ifndef LFS_ERROR
 #ifndef LFS_NO_ERROR
+#ifdef __ZEPHYR__
+#define LFS_ERROR(fmt, ...) LOG_ERR("%s:%d: " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#else /* __ZEPHYR__ */
 #define LFS_ERROR_(fmt, ...) \
     printf("%s:%d:error: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_ERROR(...) LFS_ERROR_(__VA_ARGS__, "")
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_ERROR(...)
 #endif
@@ -92,7 +124,11 @@ extern "C"
 // Runtime assertions
 #ifndef LFS_ASSERT
 #ifndef LFS_NO_ASSERT
+#ifdef __ZEPHYR__
+#define LFS_ASSERT(test) __ASSERT_NO_MSG(test)
+#else /* __ZEPHYR__ */
 #define LFS_ASSERT(test) assert(test)
+#endif /* __ZEPHYR__ */
 #else
 #define LFS_ASSERT(test)
 #endif
