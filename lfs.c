@@ -8,7 +8,7 @@
 #include "lfs_util.h"
 
 #ifdef __ZEPHYR__
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(littlefs, CONFIG_FS_LOG_LEVEL);
 #endif
 
