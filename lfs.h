@@ -8,8 +8,6 @@
 #ifndef LFS_H
 #define LFS_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include "lfs_util.h"
 
 #ifdef __cplusplus
@@ -23,14 +21,14 @@ extern "C"
 // Software library version
 // Major (top-nibble), incremented on backwards incompatible changes
 // Minor (bottom-nibble), incremented on feature additions
-#define LFS_VERSION 0x00020005
+#define LFS_VERSION 0x00020006
 #define LFS_VERSION_MAJOR (0xffff & (LFS_VERSION >> 16))
 #define LFS_VERSION_MINOR (0xffff & (LFS_VERSION >>  0))
 
 // Version of On-disk data structures
 // Major (top-nibble), incremented on backwards incompatible changes
 // Minor (bottom-nibble), incremented on feature additions
-#define LFS_DISK_VERSION 0x00020000
+#define LFS_DISK_VERSION 0x00020001
 #define LFS_DISK_VERSION_MAJOR (0xffff & (LFS_DISK_VERSION >> 16))
 #define LFS_DISK_VERSION_MINOR (0xffff & (LFS_DISK_VERSION >>  0))
 
@@ -114,6 +112,8 @@ enum lfs_type {
     LFS_TYPE_SOFTTAIL       = 0x600,
     LFS_TYPE_HARDTAIL       = 0x601,
     LFS_TYPE_MOVESTATE      = 0x7ff,
+    LFS_TYPE_CCRC           = 0x500,
+    LFS_TYPE_FCRC           = 0x5ff,
 
     // internal chip sources
     LFS_FROM_NOOP           = 0x000,
@@ -534,8 +534,8 @@ int lfs_file_open(lfs_t *lfs, lfs_file_t *file,
 // are values from the enum lfs_open_flags that are bitwise-ored together.
 //
 // The config struct provides additional config options per file as described
-// above. The config struct must be allocated while the file is open, and the
-// config struct must be zeroed for defaults and backwards compatibility.
+// above. The config struct must remain allocated while the file is open, and
+// the config struct must be zeroed for defaults and backwards compatibility.
 //
 // Returns a negative error code on failure.
 int lfs_file_opencfg(lfs_t *lfs, lfs_file_t *file,
@@ -675,6 +675,18 @@ lfs_ssize_t lfs_fs_size(lfs_t *lfs);
 //
 // Returns a negative error code on failure.
 int lfs_fs_traverse(lfs_t *lfs, int (*cb)(void*, lfs_block_t), void *data);
+
+#ifndef LFS_READONLY
+// Attempt to make the filesystem consistent and ready for writing
+//
+// Calling this function is not required, consistency will be implicitly
+// enforced on the first operation that writes to the filesystem, but this
+// function allows the work to be performed earlier and without other
+// filesystem changes.
+//
+// Returns a negative error code on failure.
+int lfs_fs_mkconsistent(lfs_t *lfs);
+#endif
 
 #ifndef LFS_READONLY
 #ifdef LFS_MIGRATE
