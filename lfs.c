@@ -8,6 +8,10 @@
 #include "lfs.h"
 #include "lfs_util.h"
 
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+LOG_MODULE_DECLARE(littlefs, CONFIG_FS_LOG_LEVEL);
+#endif
 
 #define LFS_BLOCK_NULL ((lfs_block_t)-1)
 #define LFS_BLOCK_INLINE ((lfs_block_t)-2)
@@ -488,8 +492,10 @@ static inline void lfs_superblock_tole32(lfs_superblock_t *superblock) {
     superblock->file_max    = lfs_tole32(superblock->file_max);
     superblock->attr_max    = lfs_tole32(superblock->attr_max);
 }
+#endif
 
 #ifndef LFS_NO_ASSERT
+#if __ASSERT_ON
 static bool lfs_mlist_isopen(struct lfs_mlist *head,
         struct lfs_mlist *node) {
     for (struct lfs_mlist **p = &head; *p; p = &(*p)->next) {
