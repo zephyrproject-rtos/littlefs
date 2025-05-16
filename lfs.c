@@ -407,18 +407,15 @@ struct lfs_diskoff {
 
 // operations on global state
 static inline void lfs_gstate_xor(lfs_gstate_t *a, const lfs_gstate_t *b) {
-    for (int i = 0; i < 3; i++) {
-        ((uint32_t*)a)[i] ^= ((const uint32_t*)b)[i];
-    }
+    a->tag ^= b->tag;
+    a->pair[0] ^= b->pair[0];
+    a->pair[1] ^= b->pair[1];
 }
 
 static inline bool lfs_gstate_iszero(const lfs_gstate_t *a) {
-    for (int i = 0; i < 3; i++) {
-        if (((uint32_t*)a)[i] != 0) {
-            return false;
-        }
-    }
-    return true;
+    return a->tag == 0
+            && a->pair[0] == 0
+            && a->pair[1] == 0;
 }
 
 #ifndef LFS_READONLY
@@ -2374,7 +2371,8 @@ fixmlist:;
             if (d->m.pair != pair) {
                 for (int i = 0; i < attrcount; i++) {
                     if (lfs_tag_type3(attrs[i].tag) == LFS_TYPE_DELETE &&
-                            d->id == lfs_tag_id(attrs[i].tag)) {
+                            d->id == lfs_tag_id(attrs[i].tag) &&
+                            d->type != LFS_TYPE_DIR) {
                         d->m.pair[0] = LFS_BLOCK_NULL;
                         d->m.pair[1] = LFS_BLOCK_NULL;
                     } else if (lfs_tag_type3(attrs[i].tag) == LFS_TYPE_DELETE &&
@@ -2563,7 +2561,7 @@ static int lfs_dir_orphaningcommit(lfs_t *lfs, lfs_mdir_t *dir,
         if (err != LFS_ERR_NOENT) {
             if (lfs_gstate_hasorphans(&lfs->gstate)) {
                 // next step, clean up orphans
-                err = lfs_fs_preporphans(lfs, -hasparent);
+                err = lfs_fs_preporphans(lfs, -(int8_t)hasparent);
                 if (err) {
                     return err;
                 }
@@ -3939,7 +3937,9 @@ static int lfs_remove_(lfs_t *lfs, const char *path) {
     }
 
     lfs->mlist = dir.next;
-    if (lfs_tag_type3(tag) == LFS_TYPE_DIR) {
+    if (lfs_gstate_hasorphans(&lfs->gstate)) {
+        LFS_ASSERT(lfs_tag_type3(tag) == LFS_TYPE_DIR);
+
         // fix orphan
         err = lfs_fs_preporphans(lfs, -1);
         if (err) {
@@ -4083,8 +4083,10 @@ static int lfs_rename_(lfs_t *lfs, const char *oldpath, const char *newpath) {
     }
 
     lfs->mlist = prevdir.next;
-    if (prevtag != LFS_ERR_NOENT
-            && lfs_tag_type3(prevtag) == LFS_TYPE_DIR) {
+    if (lfs_gstate_hasorphans(&lfs->gstate)) {
+        LFS_ASSERT(prevtag != LFS_ERR_NOENT
+                && lfs_tag_type3(prevtag) == LFS_TYPE_DIR);
+
         // fix orphan
         err = lfs_fs_preporphans(lfs, -1);
         if (err) {
@@ -5240,40 +5242,64 @@ static int lfs_fs_gc_(lfs_t *lfs) {
 #endif
 
 #ifndef LFS_READONLY
+#ifdef LFS_SHRINKNONRELOCATING
+static int lfs_shrink_checkblock(void *data, lfs_block_t block) {
+    lfs_size_t threshold = *((lfs_size_t*)data);
+    if (block >= threshold) {
+        return LFS_ERR_NOTEMPTY;
+    }
+    return 0;
+}
+#endif
+
 static int lfs_fs_grow_(lfs_t *lfs, lfs_size_t block_count) {
+    int err;
+
+    if (block_count == lfs->block_count) {
+        return 0;
+    }
+
+    
+#ifndef LFS_SHRINKNONRELOCATING
     // shrinking is not supported
     LFS_ASSERT(block_count >= lfs->block_count);
-
-    if (block_count > lfs->block_count) {
-        lfs->block_count = block_count;
-
-        // fetch the root
-        lfs_mdir_t root;
-        int err = lfs_dir_fetch(lfs, &root, lfs->root);
-        if (err) {
-            return err;
-        }
-
-        // update the superblock
-        lfs_superblock_t superblock;
-        lfs_stag_t tag = lfs_dir_get(lfs, &root, LFS_MKTAG(0x7ff, 0x3ff, 0),
-                LFS_MKTAG(LFS_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
-                &superblock);
-        if (tag < 0) {
-            return tag;
-        }
-        lfs_superblock_fromle32(&superblock);
-
-        superblock.block_count = lfs->block_count;
-
-        lfs_superblock_tole32(&superblock);
-        err = lfs_dir_commit(lfs, &root, LFS_MKATTRS(
-                {tag, &superblock}));
+#endif
+#ifdef LFS_SHRINKNONRELOCATING
+    if (block_count < lfs->block_count) {
+        err = lfs_fs_traverse_(lfs, lfs_shrink_checkblock, &block_count, true);
         if (err) {
             return err;
         }
     }
+#endif
 
+    lfs->block_count = block_count;
+
+    // fetch the root
+    lfs_mdir_t root;
+    err = lfs_dir_fetch(lfs, &root, lfs->root);
+    if (err) {
+        return err;
+    }
+
+    // update the superblock
+    lfs_superblock_t superblock;
+    lfs_stag_t tag = lfs_dir_get(lfs, &root, LFS_MKTAG(0x7ff, 0x3ff, 0),
+            LFS_MKTAG(LFS_TYPE_INLINESTRUCT, 0, sizeof(superblock)),
+            &superblock);
+    if (tag < 0) {
+        return tag;
+    }
+    lfs_superblock_fromle32(&superblock);
+
+    superblock.block_count = lfs->block_count;
+
+    lfs_superblock_tole32(&superblock);
+    err = lfs_dir_commit(lfs, &root, LFS_MKATTRS(
+            {tag, &superblock}));
+    if (err) {
+        return err;
+    }
     return 0;
 }
 #endif
@@ -6293,7 +6319,7 @@ lfs_soff_t lfs_file_size(lfs_t *lfs, lfs_file_t *file) {
 
     lfs_soff_t res = lfs_file_size_(lfs, file);
 
-    LFS_TRACE("lfs_file_size -> %"PRId32, res);
+    LFS_TRACE("lfs_file_size -> %"PRIu32, res);
     LFS_UNLOCK(lfs->cfg);
     return res;
 }
