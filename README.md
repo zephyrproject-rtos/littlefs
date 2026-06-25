@@ -192,7 +192,7 @@ More details on how littlefs works can be found in [DESIGN.md](DESIGN.md) and
 ## Testing
 
 The littlefs comes with a test suite designed to run on a PC using the
-[emulated block device](bd/lfs_testbd.h) found in the `bd` directory.
+[emulated block device](bd/lfs_emubd.h) found in the `bd` directory.
 The tests assume a Linux environment and can be started with make:
 
 ``` bash
@@ -267,7 +267,11 @@ License Identifiers that are here available: http://spdx.org/licenses/
   to create images of the filesystem on your PC. Check if littlefs will fit
   your needs, create images for a later download to the target memory or
   inspect the content of a binary image of the target memory.
-  
+
+- [littlefs-toy] - A command-line tool for creating and working with littlefs
+  images. Uses syntax similar to tar command for ease of use. Supports working
+  on littlefs images embedded inside another file (firmware image, etc).
+
 - [littlefs2-rust] - A Rust wrapper for littlefs. This project allows you
   to use littlefs in a Rust-friendly API, reaping the benefits of Rust's memory
   safety and other guarantees.
@@ -321,6 +325,7 @@ License Identifiers that are here available: http://spdx.org/licenses/
 [littlefs-js]: https://github.com/geky/littlefs-js
 [littlefs-js-demo]:http://littlefs.geky.net/demo.html
 [littlefs-python]: https://pypi.org/project/littlefs-python/
+[littlefs-toy]: https://github.com/tjko/littlefs-toy
 [littlefs2-rust]: https://crates.io/crates/littlefs2
 [nim-littlefs]: https://github.com/Graveflo/nim-littlefs
 [chamelon]: https://github.com/yomimono/chamelon
